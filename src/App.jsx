@@ -7,6 +7,15 @@ import Settings from './components/Settings.jsx'
 import AddHabit from './components/AddHabit.jsx'
 import LogRun from './components/LogRun.jsx'
 
+// Derives a foreground + background CSS color pair from an HSL knob, keeping
+// backgrounds light in light mode and dark in dark mode regardless of hue.
+function colorVarsFor(h, s, l, isDark) {
+  const fgL = isDark ? Math.min(80, l + 32) : l
+  const bgS = isDark ? Math.min(50, s * 0.6) : Math.min(60, s * 0.85)
+  const bgL = isDark ? 18 : 90
+  return { fg: `hsl(${h}, ${s}%, ${fgL}%)`, bg: `hsl(${h}, ${bgS}%, ${bgL}%)` }
+}
+
 export default function App() {
   const [state, setState] = useState(loadState)
   const [tab, setTab] = useState('home')
@@ -19,6 +28,18 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', state.theme)
   }, [state.theme])
+
+  useEffect(() => {
+    const isDark = state.theme === 'dark'
+    const { accentH, accentS, accentL, highlightH, highlightS, highlightL } = state.colors
+    const accent = colorVarsFor(accentH, accentS, accentL, isDark)
+    const highlight = colorVarsFor(highlightH, highlightS, highlightL, isDark)
+    const root = document.documentElement
+    root.style.setProperty('--green', accent.fg)
+    root.style.setProperty('--green-bg', accent.bg)
+    root.style.setProperty('--amber', highlight.fg)
+    root.style.setProperty('--amber-bg', highlight.bg)
+  }, [state.colors, state.theme])
 
   function update(fn) {
     setState((prev) => {
