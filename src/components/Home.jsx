@@ -1,4 +1,4 @@
-import { centsForDaily, computeStreak, todayKey, weekKey } from '../lib/habitLogic.js'
+import { pointsForDaily, computeStreak, todayKey, weekKey } from '../lib/habitLogic.js'
 
 export default function Home({ state, update, onAddHabit, onLogRun }) {
   const today = todayKey()
@@ -15,22 +15,22 @@ export default function Home({ state, update, onAddHabit, onLogRun }) {
       const dayLog = (s.dailyLog[today] ??= {})
       const wasDone = !!dayLog[habit.id]
       dayLog[habit.id] = !wasDone
-      const cents = centsForDaily(habit.difficulty)
+      const points = pointsForDaily(habit.difficulty)
       if (!wasDone) {
-        s.treatFund.currentCents += cents
-        s.treatFund.history.unshift({
+        s.points += points
+        s.history.unshift({
           id: crypto.randomUUID(),
           label: habit.name,
           difficulty: habit.difficulty,
-          cents,
+          points,
           timestamp: Date.now(),
         })
       } else {
         // undo: remove the most recent matching earning
-        const idx = s.treatFund.history.findIndex((h) => h.label === habit.name && h.cents === cents)
+        const idx = s.history.findIndex((h) => h.label === habit.name && h.points === points)
         if (idx !== -1) {
-          s.treatFund.currentCents -= cents
-          s.treatFund.history.splice(idx, 1)
+          s.points -= points
+          s.history.splice(idx, 1)
         }
       }
     })
@@ -51,7 +51,7 @@ export default function Home({ state, update, onAddHabit, onLogRun }) {
         {dailyHabits.map((h) => {
           const done = !!state.dailyLog[today]?.[h.id]
           return (
-            <div className="row" key={h.id}>
+            <div className={`row ${done ? 'row-done' : ''}`} key={h.id}>
               <button
                 className={`checkbox ${done ? 'checked' : ''}`}
                 aria-label={done ? `Mark ${h.name} not done` : `Mark ${h.name} done`}
@@ -59,7 +59,7 @@ export default function Home({ state, update, onAddHabit, onLogRun }) {
               >
                 {done && <i className="ti ti-check" style={{ fontSize: 14 }} aria-hidden="true" />}
               </button>
-              <span style={{ flex: 1, fontSize: 14 }}>{h.name}</span>
+              <span style={{ flex: 1, fontSize: 14, textDecoration: done ? 'line-through' : 'none' }}>{h.name}</span>
               <span className={`badge ${h.difficulty}`}>{h.difficulty}</span>
             </div>
           )
