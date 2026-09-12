@@ -1,31 +1,23 @@
 // Point values per habit type/difficulty. Tune these to retune the whole
 // economy without touching individual habits.
 export const POINTS = {
-  easy: 1,
-  medium: 2,
-  hard: 3,
-  quotaInstance: 2,
-  quotaBonus: 4,
+  easy: 5,
+  medium: 10,
+  hard: 15,
+  quotaInstance: 8,
+  quotaBonus: 20,
 }
 
-// Single conversion rate: points -> cents. Change this one number to make
-// the whole app's payouts feel faster or slower.
-export const CENTS_PER_POINT = 25
-
-export function centsForDaily(difficulty) {
-  return (POINTS[difficulty] ?? POINTS.medium) * CENTS_PER_POINT
+export function pointsForDaily(difficulty) {
+  return POINTS[difficulty] ?? POINTS.medium
 }
 
-export function centsForQuotaInstance() {
-  return POINTS.quotaInstance * CENTS_PER_POINT
+export function pointsForQuotaInstance() {
+  return POINTS.quotaInstance
 }
 
-export function centsForQuotaBonus() {
-  return POINTS.quotaBonus * CENTS_PER_POINT
-}
-
-export function formatCents(cents) {
-  return `$${(cents / 100).toFixed(2)}`
+export function pointsForQuotaBonus() {
+  return POINTS.quotaBonus
 }
 
 export function todayKey(date = new Date()) {
@@ -42,17 +34,17 @@ export function weekKey(date = new Date()) {
   return `${d.getUTCFullYear()}-W${weekNo}`
 }
 
-// Estimate days remaining for a goal based on recent average earn rate.
-export function estimatePaceDays(remainingCents, recentHistory) {
-  if (remainingCents <= 0) return 0
+// Estimate days remaining for a treat based on recent average earn rate.
+export function estimatePaceDays(remainingPoints, recentHistory) {
+  if (remainingPoints <= 0) return 0
   const cutoff = Date.now() - 14 * 86400000
   const recent = recentHistory.filter((h) => h.timestamp >= cutoff)
   if (recent.length === 0) return null
-  const totalCents = recent.reduce((sum, h) => sum + h.cents, 0)
+  const totalPoints = recent.reduce((sum, h) => sum + h.points, 0)
   const daySpan = Math.max(1, Math.round((Date.now() - Math.min(...recent.map((h) => h.timestamp))) / 86400000))
-  const perDay = totalCents / daySpan
+  const perDay = totalPoints / daySpan
   if (perDay <= 0) return null
-  return Math.ceil(remainingCents / perDay)
+  return Math.ceil(remainingPoints / perDay)
 }
 
 export function computeStreak(dailyLog, habitId) {

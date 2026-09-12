@@ -9,13 +9,21 @@ const seedState = {
   dailyLog: {}, // { '2026-09-12': { h1: true, h2: false } }
   quotaLog: {}, // { 'h3': { '2026-W37': { count: 2, bonusPaid: false } } }
   runs: [], // { id, date, distanceMi, durationMin }
-  treatFund: {
-    goalName: 'Boba tea',
-    goalCents: 2000,
-    currentCents: 0,
-    history: [], // { id, label, cents, timestamp }
+  points: 0,
+  treats: [
+    { id: 't1', name: 'Boba tea', icon: 'boba', cost: 40 },
+    { id: 't2', name: 'New book', icon: 'book', cost: 100 },
+  ],
+  history: [], // { id, label, tag?, points, timestamp }
+  theme: 'light',
+  colors: {
+    accentH: 86,
+    accentS: 40,
+    accentL: 34,
+    highlightH: 37,
+    highlightS: 68,
+    highlightL: 38,
   },
-  theme: 'dark',
 }
 
 export function loadState() {
@@ -23,7 +31,11 @@ export function loadState() {
     const raw = localStorage.getItem(KEY)
     if (!raw) return structuredClone(seedState)
     const parsed = JSON.parse(raw)
-    return { ...structuredClone(seedState), ...parsed }
+    return {
+      ...structuredClone(seedState),
+      ...parsed,
+      colors: { ...structuredClone(seedState.colors), ...parsed.colors },
+    }
   } catch {
     return structuredClone(seedState)
   }
