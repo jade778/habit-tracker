@@ -1,93 +1,121 @@
 import { useState } from 'react'
-import { estimatePaceDays, formatCents } from '../lib/habitLogic.js'
+import { TREAT_ICONS, iconById } from '../lib/icons.jsx'
 
 export default function TreatFund({ state, update }) {
-  const [editingGoal, setEditingGoal] = useState(false)
-  const [name, setName] = useState(state.treatFund.goalName)
-  const [amount, setAmount] = useState((state.treatFund.goalCents / 100).toString())
+  const [showForm, setShowForm] = useState(false)
+  const [name, setName] = useState('')
+  const [cost, setCost] = useState('20')
+  const [iconId, setIconId] = useState(TREAT_ICONS[0].id)
   const [error, setError] = useState('')
 
-  const { currentCents, goalCents, goalName, history } = state.treatFund
-  const pct = Math.min(100, Math.round((currentCents / goalCents) * 100))
-  const canRedeem = currentCents >= goalCents
-  const remaining = Math.max(0, goalCents - currentCents)
-  const paceDays = remaining > 0 ? estimatePaceDays(remaining, history) : 0
-
-  function redeem() {
+  function redeem(treat) {
+    if (state.points < treat.cost) return
     update((s) => {
-      s.treatFund.currentCents = 0
+      s.points -= treat.cost
+      s.history.unshift({
+        id: crypto.randomUUID(),
+        label: treat.name,
+        tag: 'redeemed',
+        points: -treat.cost,
+        timestamp: Date.now(),
+      })
     })
   }
 
-  function saveGoal() {
-    const parsed = parseFloat(amount)
+  function addTreat() {
+    const parsed = Number(cost)
     if (!name.trim()) {
       setError('Give the treat a name first.')
       return
     }
     if (!parsed || parsed <= 0) {
-      setError('Enter an amount greater than $0.')
+      setError('Enter a point cost greater than 0.')
       return
     }
     update((s) => {
-      s.treatFund.goalName = name.trim()
-      s.treatFund.goalCents = Math.round(parsed * 100)
+      s.treats.push({ id: crypto.randomUUID(), name: name.trim(), icon: iconId, cost: Math.round(parsed) })
     })
+    setName('')
+    setCost('20')
+    setIconId(TREAT_ICONS[0].id)
     setError('')
-    setEditingGoal(false)
+    setShowForm(false)
   }
 
   return (
     <div className="screen">
       <div className="top-bar">
         <h2>Treat fund</h2>
-        <button onClick={() => setEditingGoal((v) => !v)} aria-label="Edit goal">
-          <i className="ti ti-edit" aria-hidden="true" />
+      </div>
+
+      <div className="card" style={{ background: 'var(--amber-bg)', textAlign: 'center', border: 'none' }}>
+        <i className="ti ti-star" style={{ fontSize: 26, color: 'var(--amber)' }} aria-hidden="true" />
+        <div className="muted" style={{ marginTop: 4 }}>Points balance</div>
+        <div style={{ fontSize: 32, fontWeight: 500, marginTop: 2 }}>{state.points}</div>
+      </div>
+
+      <div className="top-bar" style={{ marginTop: 20 }}>
+        <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400, margin: 0 }}>Treats</h3>
+        <button onClick={() => setShowForm((v) => !v)} aria-label="New treat">
+          <i className="ti ti-plus" aria-hidden="true" />
         </button>
       </div>
 
-      {editingGoal ? (
-        <div className="card">
+      {showForm && (
+        <div className="card" style={{ marginBottom: 16 }}>
           <div className="field">
-            <label htmlFor="goal-name">Treat name</label>
-            <input id="goal-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Boba tea" />
+            <label htmlFor="treat-name">Treat name</label>
+            <input id="treat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Movie night" />
           </div>
           <div className="field">
-            <label htmlFor="goal-amount">Goal amount ($)</label>
-            <input id="goal-amount" type="number" min="0" step="0.5" value={amount} onChange={(e) => setAmount(e.target.value)} />
-            {error && <div className="error-text">{error}</div>}
+            <label htmlFor="treat-cost">Point cost</label>
+            <input id="treat-cost" type="number" min="1" step="1" value={cost} onChange={(e) => setCost(e.target.value)} />
           </div>
-          <button className="primary" style={{ width: '100%' }} onClick={saveGoal}>
-            Save goal
-          </button>
-        </div>
-      ) : (
-        <div className="card" style={{ background: 'var(--amber-bg)', textAlign: 'center', border: 'none' }}>
-          <i className="ti ti-cup" style={{ fontSize: 26, color: 'var(--amber)' }} aria-hidden="true" />
-          <div className="muted" style={{ marginTop: 4 }}>
-            {goalName}
-          </div>
-          <div style={{ fontSize: 24, fontWeight: 500, marginTop: 2 }}>
-            {formatCents(currentCents)} <span style={{ fontSize: 14, fontWeight: 400, color: 'var(--text-secondary)' }}>/ {formatCents(goalCents)}</span>
-          </div>
-          <div className="progress-track" style={{ marginTop: 10 }}>
-            <div className="progress-fill" style={{ width: `${pct}%`, background: 'var(--amber)' }} />
-          </div>
-          {!canRedeem && paceDays !== null && (
-            <div className="muted" style={{ marginTop: 8 }}>
-              At your current pace, about {paceDays} day{paceDays === 1 ? '' : 's'}
+          <div className="field">
+            <label>Icon</label>
+            <div className="icon-picker-grid">
+              {TREAT_ICONS.map((icon) => (
+                <button
+                  key={icon.id}
+                  type="button"
+                  className={`icon-picker-item ${iconId === icon.id ? 'selected' : ''}`}
+                  onClick={() => setIconId(icon.id)}
+                  aria-label={icon.label}
+                >
+                  {icon.render()}
+                </button>
+              ))}
             </div>
-          )}
-          <button className={canRedeem ? 'primary' : ''} style={{ width: '100%', marginTop: 12 }} disabled={!canRedeem} onClick={redeem}>
-            {canRedeem ? 'Redeem now' : `Redeem at ${formatCents(goalCents)}`}
+          </div>
+          {error && <div className="error-text" style={{ marginBottom: 10 }}>{error}</div>}
+          <button className="primary" style={{ width: '100%' }} onClick={addTreat}>
+            Add treat
           </button>
         </div>
       )}
 
-      <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400, margin: '18px 0 8px' }}>Recent earnings</h3>
+      <div className="treat-grid">
+        {state.treats.length === 0 && <p className="muted">No treats yet. Add one above.</p>}
+        {state.treats.map((t) => {
+          const icon = iconById(t.icon)
+          const canRedeem = state.points >= t.cost
+          return (
+            <div className="treat-card" key={t.id}>
+              {icon.render({ size: 32 })}
+              <div style={{ fontSize: 13, fontWeight: 500, marginTop: 6 }}>{t.name}</div>
+              <div className="muted" style={{ marginTop: 2 }}>{t.cost} pts</div>
+              <button className={canRedeem ? 'primary' : ''} disabled={!canRedeem} style={{ width: '100%', marginTop: 8 }} onClick={() => redeem(t)}>
+                Redeem
+              </button>
+            </div>
+          )
+        })}
+      </div>
+
+      <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400, margin: '18px 0 8px' }}>Recent activity</h3>
       <div className="card">
-        {history.length === 0 && <p className="muted">Complete a habit to start earning.</p>}
-        {history.slice(0, 20).map((h) => (
+        {state.history.length === 0 && <p className="muted">Complete a habit to start earning.</p>}
+        {state.history.slice(0, 20).map((h) => (
           <div className="row" key={h.id} style={{ justifyContent: 'space-between' }}>
             <span style={{ fontSize: 13 }}>
               {h.label}
@@ -97,7 +125,10 @@ export default function TreatFund({ state, update }) {
                 </span>
               )}
             </span>
-            <span style={{ color: 'var(--green)', fontWeight: 500, fontSize: 13 }}>+{formatCents(h.cents)}</span>
+            <span style={{ color: h.points < 0 ? 'var(--coral)' : 'var(--green)', fontWeight: 500, fontSize: 13 }}>
+              {h.points < 0 ? '' : '+'}
+              {h.points}
+            </span>
           </div>
         ))}
       </div>
