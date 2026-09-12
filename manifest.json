@@ -1,0 +1,11 @@
+{
+  "name": "Habit Quest",
+  "short_name": "Habit Quest",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1b1812",
+  "theme_color": "#1b1812",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
