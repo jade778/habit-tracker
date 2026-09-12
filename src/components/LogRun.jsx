@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { centsForQuotaInstance, centsForQuotaBonus, formatCents, weekKey } from '../lib/habitLogic.js'
+import { pointsForQuotaInstance, pointsForQuotaBonus, weekKey } from '../lib/habitLogic.js'
 
 export default function LogRun({ state, update, onClose }) {
   const [distance, setDistance] = useState('')
@@ -24,8 +24,8 @@ export default function LogRun({ state, update, onClose }) {
     update((s) => {
       s.runs.unshift({ id: crypto.randomUUID(), date: Date.now(), distanceMi: dist, durationMin: dur })
 
-      const instanceCents = centsForQuotaInstance()
-      s.treatFund.currentCents += instanceCents
+      const instancePoints = pointsForQuotaInstance()
+      s.points += instancePoints
 
       const habit = s.habits.find((h) => h.id === runHabit?.id)
       if (habit) {
@@ -33,29 +33,29 @@ export default function LogRun({ state, update, onClose }) {
         const bucket = (s.quotaLog[habit.id] ??= {})
         const week = (bucket[wk] ??= { count: 0, bonusPaid: false })
         week.count += 1
-        s.treatFund.history.unshift({
+        s.history.unshift({
           id: crypto.randomUUID(),
           label: `Run logged (${week.count}/${habit.target})`,
-          cents: instanceCents,
+          points: instancePoints,
           timestamp: Date.now(),
         })
         if (week.count >= habit.target && !week.bonusPaid) {
           week.bonusPaid = true
-          const bonus = centsForQuotaBonus()
-          s.treatFund.currentCents += bonus
-          s.treatFund.history.unshift({
+          const bonus = pointsForQuotaBonus()
+          s.points += bonus
+          s.history.unshift({
             id: crypto.randomUUID(),
             label: `${habit.name} ${habit.target}x week`,
             tag: 'quota bonus',
-            cents: bonus,
+            points: bonus,
             timestamp: Date.now(),
           })
         }
       } else {
-        s.treatFund.history.unshift({
+        s.history.unshift({
           id: crypto.randomUUID(),
           label: 'Run logged',
-          cents: instanceCents,
+          points: instancePoints,
           timestamp: Date.now(),
         })
       }
@@ -88,7 +88,7 @@ export default function LogRun({ state, update, onClose }) {
         {error && <div className="error-text" style={{ marginBottom: 10 }}>{error}</div>}
 
         <p className="muted" style={{ marginBottom: 10 }}>
-          Earns {formatCents(centsForQuotaInstance())}, plus a bonus when you hit your weekly target.
+          Earns {pointsForQuotaInstance()} pts, plus a bonus when you hit your weekly target.
         </p>
 
         <button className="primary" style={{ width: '100%' }} onClick={save}>
