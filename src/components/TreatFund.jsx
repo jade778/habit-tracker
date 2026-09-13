@@ -1,6 +1,93 @@
 import { useState } from 'react'
 import { TREAT_ICONS, iconById } from '../lib/icons.jsx'
 
+function TreatCard({ treat, points, onRedeem, onSave, onRemove }) {
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(treat.name)
+  const [cost, setCost] = useState(String(treat.cost))
+  const [iconId, setIconId] = useState(treat.icon)
+  const [error, setError] = useState('')
+
+  function startEdit() {
+    setName(treat.name)
+    setCost(String(treat.cost))
+    setIconId(treat.icon)
+    setError('')
+    setEditing(true)
+  }
+
+  function save() {
+    const parsed = Number(cost)
+    if (!name.trim()) {
+      setError('Give the treat a name first.')
+      return
+    }
+    if (!parsed || parsed <= 0) {
+      setError('Enter a point cost greater than 0.')
+      return
+    }
+    onSave(treat.id, { name: name.trim(), cost: Math.round(parsed), icon: iconId })
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="treat-card">
+        <div className="field" style={{ width: '100%', marginBottom: 8 }}>
+          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Treat name" />
+        </div>
+        <div className="field" style={{ width: '100%', marginBottom: 8 }}>
+          <input type="number" min="1" step="1" value={cost} onChange={(e) => setCost(e.target.value)} />
+        </div>
+        <div className="icon-picker-grid" style={{ width: '100%', marginBottom: 8 }}>
+          {TREAT_ICONS.map((icon) => (
+            <button
+              key={icon.id}
+              type="button"
+              className={`icon-picker-item ${iconId === icon.id ? 'selected' : ''}`}
+              onClick={() => setIconId(icon.id)}
+              aria-label={icon.label}
+            >
+              {icon.render()}
+            </button>
+          ))}
+        </div>
+        {error && <div className="error-text" style={{ marginBottom: 8 }}>{error}</div>}
+        <div style={{ display: 'flex', gap: 6, width: '100%' }}>
+          <button style={{ flex: 1 }} onClick={() => setEditing(false)}>
+            Cancel
+          </button>
+          <button className="primary" style={{ flex: 1 }} onClick={save}>
+            Save
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const icon = iconById(treat.icon)
+  const canRedeem = points >= treat.cost
+
+  return (
+    <div className="treat-card">
+      <div className="treat-card-actions">
+        <button className="btn-sm" onClick={startEdit} aria-label={`Edit ${treat.name}`}>
+          <i className="ti ti-edit" aria-hidden="true" /> Edit
+        </button>
+        <button className="btn-sm btn-danger" onClick={() => onRemove(treat.id)} aria-label={`Delete ${treat.name}`}>
+          <i className="ti ti-trash" aria-hidden="true" /> Delete
+        </button>
+      </div>
+      {icon.render({ size: 32 })}
+      <div style={{ fontSize: 13, fontWeight: 500, marginTop: 6 }}>{treat.name}</div>
+      <div className="muted" style={{ marginTop: 2 }}>{treat.cost} pts</div>
+      <button className={canRedeem ? 'primary' : ''} disabled={!canRedeem} style={{ width: '100%', marginTop: 8 }} onClick={() => onRedeem(treat)}>
+        Redeem
+      </button>
+    </div>
+  )
+}
+
 export default function TreatFund({ state, update }) {
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -19,6 +106,22 @@ export default function TreatFund({ state, update }) {
         points: -treat.cost,
         timestamp: Date.now(),
       })
+    })
+  }
+
+  function saveTreat(id, changes) {
+    update((s) => {
+      const treat = s.treats.find((t) => t.id === id)
+      if (!treat) return
+      treat.name = changes.name
+      treat.cost = changes.cost
+      treat.icon = changes.icon
+    })
+  }
+
+  function removeTreat(id) {
+    update((s) => {
+      s.treats = s.treats.filter((t) => t.id !== id)
     })
   }
 
@@ -96,20 +199,9 @@ export default function TreatFund({ state, update }) {
 
       <div className="treat-grid">
         {state.treats.length === 0 && <p className="muted">No treats yet. Add one above.</p>}
-        {state.treats.map((t) => {
-          const icon = iconById(t.icon)
-          const canRedeem = state.points >= t.cost
-          return (
-            <div className="treat-card" key={t.id}>
-              {icon.render({ size: 32 })}
-              <div style={{ fontSize: 13, fontWeight: 500, marginTop: 6 }}>{t.name}</div>
-              <div className="muted" style={{ marginTop: 2 }}>{t.cost} pts</div>
-              <button className={canRedeem ? 'primary' : ''} disabled={!canRedeem} style={{ width: '100%', marginTop: 8 }} onClick={() => redeem(t)}>
-                Redeem
-              </button>
-            </div>
-          )
-        })}
+        {state.treats.map((t) => (
+          <TreatCard key={t.id} treat={t} points={state.points} onRedeem={redeem} onSave={saveTreat} onRemove={removeTreat} />
+        ))}
       </div>
 
       <h3 style={{ fontSize: 14, color: 'var(--text-secondary)', fontWeight: 400, margin: '18px 0 8px' }}>Recent activity</h3>
