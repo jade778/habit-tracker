@@ -72,6 +72,18 @@ button:active { transform: scale(0.98); }
 button.primary { background: var(--green); color: #16210a; border-color: var(--green); font-weight: 500; }
 button:disabled { opacity: 0.45; cursor: default; }
 
+.btn-sm {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+.btn-danger {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
 input, select {
   font-family: var(--font-body);
   font-size: 14px;
@@ -247,6 +259,19 @@ input[type='range'] {
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.treat-card-actions {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+.treat-card-actions .btn-sm {
+  flex: 1;
+  justify-content: center;
+  padding: 5px 6px;
+  font-size: 11px;
 }
 
 .icon-picker-grid {

@@ -106,12 +106,12 @@ function HabitRow({ habit, onSave, onRemove }) {
       <span style={{ fontSize: 14 }}>
         {habit.name} <span className="muted">{habit.type === 'daily' ? habit.difficulty : `${habit.target}x/week`}</span>
       </span>
-      <div style={{ display: 'flex', gap: 4 }}>
-        <button onClick={startEdit} aria-label={`Edit ${habit.name}`}>
-          <i className="ti ti-edit" aria-hidden="true" />
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button className="btn-sm" onClick={startEdit} aria-label={`Edit ${habit.name}`}>
+          <i className="ti ti-edit" aria-hidden="true" /> Edit
         </button>
-        <button onClick={() => onRemove(habit.id)} aria-label={`Delete ${habit.name}`}>
-          <i className="ti ti-trash" aria-hidden="true" />
+        <button className="btn-sm btn-danger" onClick={() => onRemove(habit.id)} aria-label={`Delete ${habit.name}`}>
+          <i className="ti ti-trash" aria-hidden="true" /> Delete
         </button>
       </div>
     </div>
