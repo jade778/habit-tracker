@@ -261,19 +261,6 @@ input[type='range'] {
   align-items: center;
 }
 
-.treat-card-actions {
-  display: flex;
-  gap: 6px;
-  width: 100%;
-  margin-bottom: 8px;
-}
-.treat-card-actions .btn-sm {
-  flex: 1;
-  justify-content: center;
-  padding: 5px 6px;
-  font-size: 11px;
-}
-
 .icon-picker-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
